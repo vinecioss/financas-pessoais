@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+:root {
+  --color-bg: #f1f2ec;
+  --color-surface: #ffffff;
+  --color-surface-alt: #e7e8df;
+  --color-text: #20241f;
+  --color-text-secondary: #63675f;
+  --color-green: #1b3a34;
+  --color-income: #2f6f4e;
+  --color-expense: #9c4a3c;
+  --color-gold: #c9a227;
+  --color-border: #dbdcd1;
+
+  --font-serif: var(--font-fraunces);
+  --font-sans: var(--font-inter);
+}
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-alt: var(--color-surface-alt);
+  --color-text: var(--color-text);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-green: var(--color-green);
+  --color-income: var(--color-income);
+  --color-expense: var(--color-expense);
+  --color-gold: var(--color-gold);
+  --color-border: var(--color-border);
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-shell {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  background: var(--color-bg);
+}
+
+.app-frame {
+  width: 100%;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: var(--color-bg);
+}
+
+@media (min-width: 640px) {
+  .app-shell {
+    align-items: center;
+    padding: 32px 0;
+  }
+
+  .app-frame {
+    width: 420px;
+    min-height: min(860px, 100dvh - 64px);
+    max-height: 860px;
+    border: 1px solid var(--color-border);
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 1px 0 rgba(32, 36, 31, 0.04);
+  }
+}
+
+.num-serif {
+  font-family: var(--font-serif), serif;
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: var(--color-gold);
+  color: var(--color-green);
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+}
