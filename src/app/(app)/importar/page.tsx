@@ -155,7 +155,7 @@ export default function ImportarPage() {
     <div className="flex flex-col">
       <Header title="Importar extrato" subtitle="Traga lançamentos de um arquivo CSV" />
 
-      <div className="flex flex-col gap-4 px-6 py-6">
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-6 lg:px-10">
         {error && (
           <p className="rounded-lg border border-[var(--color-expense)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[var(--color-expense)]">
             {error}
@@ -188,7 +188,7 @@ export default function ImportarPage() {
         {step === "done" && (
           <Card className="flex flex-col items-center gap-3 py-10 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-income)]">
-              <Check size={24} color="#fff" />
+              <Check size={24} color="var(--color-bg)" />
             </div>
             <p className="num-serif text-xl">
               {importedCount} lançamento{importedCount === 1 ? "" : "s"} importado

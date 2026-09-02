@@ -100,12 +100,14 @@ export default function PainelPage() {
   return (
     <div className="flex flex-col">
       <Header title="Caderno" subtitle="Seu resumo financeiro" />
-      <MonthSelector year={year} month={month} onChange={(y, m) => {
-        setYear(y);
-        setMonth(m);
-      }} />
+      <div className="mx-auto w-full max-w-3xl lg:px-4">
+        <MonthSelector year={year} month={month} onChange={(y, m) => {
+          setYear(y);
+          setMonth(m);
+        }} />
+      </div>
 
-      <div className="flex flex-col gap-4 px-6 pb-6">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-6 pb-10 lg:px-10 lg:pt-6">
         <Card className="text-center">
           <p className="text-sm text-[var(--color-text-secondary)]">Saldo do mês</p>
           <p
@@ -131,19 +133,21 @@ export default function PainelPage() {
           </Card>
         </div>
 
-        <Card>
-          <p className="mb-3 text-sm text-[var(--color-text-secondary)]">
-            Gastos por categoria
-          </p>
-          <ExpenseDonut data={despesasPorCategoria} />
-        </Card>
+        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-start">
+          <Card>
+            <p className="mb-3 text-sm text-[var(--color-text-secondary)]">
+              Gastos por categoria
+            </p>
+            <ExpenseDonut data={despesasPorCategoria} />
+          </Card>
 
-        <Card>
-          <p className="mb-3 text-sm text-[var(--color-text-secondary)]">
-            Ganhos por categoria
-          </p>
-          <IncomeBars data={receitasPorCategoria} />
-        </Card>
+          <Card>
+            <p className="mb-3 text-sm text-[var(--color-text-secondary)]">
+              Ganhos por categoria
+            </p>
+            <IncomeBars data={receitasPorCategoria} />
+          </Card>
+        </div>
 
         {orcamentosComGasto.length > 0 && (
           <Card>

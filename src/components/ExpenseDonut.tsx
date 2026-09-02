@@ -2,7 +2,8 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { formatCurrency } from "@/lib/format";
-import { CHART_COLORS } from "@/lib/constants";
+import { CHART_COLORS, CHART_COLORS_DARK } from "@/lib/constants";
+import { useTheme } from "@/components/ThemeToggle";
 
 export interface CategoryTotal {
   nome: string;
@@ -10,6 +11,8 @@ export interface CategoryTotal {
 }
 
 export function ExpenseDonut({ data }: { data: CategoryTotal[] }) {
+  const { theme } = useTheme();
+  const colors = theme === "dark" ? CHART_COLORS_DARK : CHART_COLORS;
   const total = data.reduce((sum, d) => sum + d.total, 0);
 
   if (total === 0) {
@@ -35,7 +38,7 @@ export function ExpenseDonut({ data }: { data: CategoryTotal[] }) {
               stroke="none"
             >
               {data.map((_, i) => (
-                <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                <Cell key={i} fill={colors[i % colors.length]} />
               ))}
             </Pie>
           </PieChart>
@@ -54,7 +57,7 @@ export function ExpenseDonut({ data }: { data: CategoryTotal[] }) {
             <span className="flex items-center gap-2">
               <span
                 className="h-2.5 w-2.5 rounded-full"
-                style={{ background: CHART_COLORS[i % CHART_COLORS.length] }}
+                style={{ background: colors[i % colors.length] }}
               />
               {d.nome}
             </span>

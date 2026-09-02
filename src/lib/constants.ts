@@ -38,3 +38,14 @@ export const CHART_COLORS = [
   "#5B7A8C",
   "#7A5C7E",
 ];
+
+export const CHART_COLORS_DARK = [
+  "#D9805F",
+  "#D9B54E",
+  "#3E8E78",
+  "#999B8C",
+  "#4FAD84",
+  "#C79A5F",
+  "#7C9BB0",
+  "#9C7FA3",
+];

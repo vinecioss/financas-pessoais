@@ -89,7 +89,7 @@ export function TransactionFormModal({
             style={{
               borderColor: tipo === "receita" ? "var(--color-income)" : "var(--color-border)",
               background: tipo === "receita" ? "var(--color-income)" : "transparent",
-              color: tipo === "receita" ? "#fff" : "var(--color-text)",
+              color: tipo === "receita" ? "var(--color-bg)" : "var(--color-text)",
             }}
           >
             Ganho
@@ -100,7 +100,7 @@ export function TransactionFormModal({
             style={{
               borderColor: tipo === "despesa" ? "var(--color-expense)" : "var(--color-border)",
               background: tipo === "despesa" ? "var(--color-expense)" : "transparent",
-              color: tipo === "despesa" ? "#fff" : "var(--color-text)",
+              color: tipo === "despesa" ? "var(--color-bg)" : "var(--color-text)",
             }}
           >
             Gasto

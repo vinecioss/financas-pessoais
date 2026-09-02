@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,15 +32,19 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-1 flex-col justify-center px-8 py-12">
-      <div className="mb-10">
-        <p className="mb-1 text-sm text-[var(--color-text-secondary)]">
-          Controle financeiro pessoal
-        </p>
-        <h1 className="num-serif text-4xl text-[var(--color-green)]">Caderno</h1>
-      </div>
+    <div className="flex min-h-dvh items-center justify-center px-6 py-12">
+      <div className="w-full max-w-sm rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 sm:p-10">
+        <div className="mb-10 flex items-start justify-between">
+          <div>
+            <p className="mb-1 text-sm text-[var(--color-text-secondary)]">
+              Controle financeiro pessoal
+            </p>
+            <h1 className="num-serif text-4xl text-[var(--color-green)]">Caderno</h1>
+          </div>
+          <ThemeToggle className="mt-1 text-[var(--color-text-secondary)] transition-opacity hover:opacity-70" />
+        </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="email" className="text-sm text-[var(--color-text-secondary)]">
             E-mail
@@ -83,7 +88,8 @@ export default function LoginPage() {
         >
           {loading ? "Entrando..." : "Entrar"}
         </button>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

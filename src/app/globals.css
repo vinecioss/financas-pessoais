@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
+
   --color-bg: #f1f2ec;
   --color-surface: #ffffff;
   --color-surface-alt: #e7e8df;
@@ -14,6 +16,21 @@
 
   --font-serif: var(--font-fraunces);
   --font-sans: var(--font-inter);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg: #15170f;
+  --color-surface: #1e2118;
+  --color-surface-alt: #262a1f;
+  --color-text: #ebede1;
+  --color-text-secondary: #999b8c;
+  --color-green: #3e8e78;
+  --color-income: #4fad84;
+  --color-expense: #d9805f;
+  --color-gold: #d9b54e;
+  --color-border: #34382a;
 }
 
 @theme inline {
@@ -45,39 +62,7 @@ body {
   color: var(--color-text);
   font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-}
-
-.app-shell {
-  min-height: 100dvh;
-  display: flex;
-  justify-content: center;
-  background: var(--color-bg);
-}
-
-.app-frame {
-  width: 100%;
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  background: var(--color-bg);
-}
-
-@media (min-width: 640px) {
-  .app-shell {
-    align-items: center;
-    padding: 32px 0;
-  }
-
-  .app-frame {
-    width: 420px;
-    min-height: min(860px, 100dvh - 64px);
-    max-height: 860px;
-    border: 1px solid var(--color-border);
-    border-radius: 28px;
-    overflow: hidden;
-    box-shadow: 0 1px 0 rgba(32, 36, 31, 0.04);
-  }
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .num-serif {
@@ -87,7 +72,7 @@ body {
 
 ::selection {
   background: var(--color-gold);
-  color: var(--color-green);
+  color: #142e29;
 }
 
 input,

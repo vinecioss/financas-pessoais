@@ -40,7 +40,9 @@ export default function CategoriasPage() {
     return (
       <div className="flex flex-col">
         <Header title="Categorias" subtitle="Organize seus ganhos e gastos" />
-        <p className="px-6 py-4 text-sm text-[var(--color-text-secondary)]">Carregando...</p>
+        <p className="mx-auto w-full max-w-4xl px-6 py-4 text-sm text-[var(--color-text-secondary)] lg:px-10">
+          Carregando...
+        </p>
       </div>
     );
   }
@@ -49,7 +51,7 @@ export default function CategoriasPage() {
     <div className="flex flex-col">
       <Header title="Categorias" subtitle="Organize seus ganhos e gastos" />
 
-      <div className="flex flex-col gap-6 px-6 py-6">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-6 py-6 lg:grid lg:grid-cols-2 lg:items-start lg:px-10">
         <CategoryGroup
           title="Ganhos"
           tipo="receita"

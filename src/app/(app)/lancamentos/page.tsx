@@ -73,63 +73,65 @@ export default function LancamentosPage() {
     <div className="flex flex-col">
       <Header title="Lançamentos" subtitle="Todos os seus ganhos e gastos" />
 
-      <div className="flex items-center justify-between gap-3 px-6 py-4">
-        <div className="flex gap-1 rounded-full bg-[var(--color-surface-alt)] p-1">
-          {(
-            [
-              ["todos", "Todos"],
-              ["receita", "Ganhos"],
-              ["despesa", "Gastos"],
-            ] as [Filter, string][]
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              onClick={() => setFilter(value)}
-              className="rounded-full px-3 py-1.5 text-sm transition-colors"
-              style={{
-                background: filter === value ? "var(--color-surface)" : "transparent",
-                color: filter === value ? "var(--color-text)" : "var(--color-text-secondary)",
-                fontWeight: filter === value ? 600 : 400,
-              }}
-            >
-              {label}
-            </button>
-          ))}
+      <div className="mx-auto w-full max-w-3xl px-6 lg:px-10">
+        <div className="flex items-center justify-between gap-3 py-4">
+          <div className="flex gap-1 rounded-full bg-[var(--color-surface-alt)] p-1">
+            {(
+              [
+                ["todos", "Todos"],
+                ["receita", "Ganhos"],
+                ["despesa", "Gastos"],
+              ] as [Filter, string][]
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                onClick={() => setFilter(value)}
+                className="rounded-full px-3 py-1.5 text-sm transition-colors"
+                style={{
+                  background: filter === value ? "var(--color-surface)" : "transparent",
+                  color: filter === value ? "var(--color-text)" : "var(--color-text-secondary)",
+                  fontWeight: filter === value ? 600 : 400,
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => {
+              setEditing(null);
+              setModalOpen(true);
+            }}
+            className="flex items-center gap-1.5 rounded-full bg-[var(--color-green)] px-4 py-2 text-sm font-medium text-[var(--color-bg)]"
+          >
+            <Plus size={16} />
+            Novo
+          </button>
         </div>
 
-        <button
-          onClick={() => {
-            setEditing(null);
-            setModalOpen(true);
-          }}
-          className="flex items-center gap-1.5 rounded-full bg-[var(--color-green)] px-4 py-2 text-sm font-medium text-[var(--color-bg)]"
-        >
-          <Plus size={16} />
-          Novo
-        </button>
-      </div>
-
-      <div className="px-6 pb-6">
-        <Card>
-          {loading ? (
-            <p className="py-4 text-sm text-[var(--color-text-secondary)]">Carregando...</p>
-          ) : filtered.length === 0 ? (
-            <p className="py-4 text-sm text-[var(--color-text-secondary)]">
-              Nenhum lançamento encontrado.
-            </p>
-          ) : (
-            filtered.map((t) => (
-              <TransactionRow
-                key={t.id}
-                transaction={t}
-                onClick={() => {
-                  setEditing(t);
-                  setModalOpen(true);
-                }}
-              />
-            ))
-          )}
-        </Card>
+        <div className="pb-10">
+          <Card>
+            {loading ? (
+              <p className="py-4 text-sm text-[var(--color-text-secondary)]">Carregando...</p>
+            ) : filtered.length === 0 ? (
+              <p className="py-4 text-sm text-[var(--color-text-secondary)]">
+                Nenhum lançamento encontrado.
+              </p>
+            ) : (
+              filtered.map((t) => (
+                <TransactionRow
+                  key={t.id}
+                  transaction={t}
+                  onClick={() => {
+                    setEditing(t);
+                    setModalOpen(true);
+                  }}
+                />
+              ))
+            )}
+          </Card>
+        </div>
       </div>
 
       {modalOpen && (

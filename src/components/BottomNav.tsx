@@ -15,7 +15,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="sticky bottom-0 z-20 flex border-t border-[var(--color-border)] bg-[var(--color-surface)]">
+    <nav className="sticky bottom-0 z-20 flex border-t border-[var(--color-border)] bg-[var(--color-surface)] lg:hidden">
       {ITEMS.map(({ href, label, icon: Icon }) => {
         const active = pathname.startsWith(href);
         return (
