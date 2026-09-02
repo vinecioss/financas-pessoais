@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Upload, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { createTransaction, getCategories } from "@/lib/queries";
+import { createTransaction, getAccounts, getCategories } from "@/lib/queries";
 import {
   detectColumns,
   parseCsvFile,
@@ -15,7 +15,7 @@ import {
 import { Header } from "@/components/Header";
 import { Card } from "@/components/Card";
 import { formatCurrency } from "@/lib/format";
-import type { Category, Tipo } from "@/types/database";
+import type { Account, Category, Tipo } from "@/types/database";
 
 type Step = "upload" | "mapping" | "review" | "done";
 
@@ -36,13 +36,18 @@ export default function ImportarPage() {
   const [mapping, setMapping] = useState<ColumnGuess>({ date: null, description: null, value: null });
   const [rows, setRows] = useState<ReviewRow[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [contaId, setContaId] = useState("");
   const [importing, setImporting] = useState(false);
   const [importedCount, setImportedCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
-    getCategories(supabase).then(setCategories);
+    Promise.all([getCategories(supabase), getAccounts(supabase)]).then(([cat, acc]) => {
+      setCategories(cat);
+      setAccounts(acc);
+    });
   }, []);
 
   const mappingComplete = mapping.date && mapping.description && mapping.value;
@@ -127,6 +132,7 @@ export default function ImportarPage() {
           tipo: r.tipo,
           valor: r.valor,
           categoria_id: r.categoria_id,
+          conta_id: contaId || null,
           data: r.data,
           descricao: r.descricao || null,
           forma_pagamento: null,
@@ -179,6 +185,9 @@ export default function ImportarPage() {
             rows={rows}
             setRows={setRows}
             categories={categories}
+            accounts={accounts}
+            contaId={contaId}
+            onContaChange={setContaId}
             includedCount={includedCount}
             onImport={handleImport}
             importing={importing}
@@ -305,6 +314,9 @@ function ReviewStep({
   rows,
   setRows,
   categories,
+  accounts,
+  contaId,
+  onContaChange,
   includedCount,
   onImport,
   importing,
@@ -312,6 +324,9 @@ function ReviewStep({
   rows: ReviewRow[];
   setRows: (rows: ReviewRow[]) => void;
   categories: Category[];
+  accounts: Account[];
+  contaId: string;
+  onContaChange: (id: string) => void;
   includedCount: number;
   onImport: () => void;
   importing: boolean;
@@ -328,6 +343,29 @@ function ReviewStep({
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-[var(--color-text-secondary)]">{totalLabel}</p>
+
+      {accounts.length > 0 && (
+        <Card>
+          <label className="mb-1.5 block text-sm text-[var(--color-text-secondary)]">
+            Conta desta importação (opcional)
+          </label>
+          <select
+            value={contaId}
+            onChange={(e) => onContaChange(e.target.value)}
+            className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm outline-none focus:border-[var(--color-green)]"
+          >
+            <option value="">Nenhuma</option>
+            {accounts.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.nome}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1.5 text-xs text-[var(--color-text-secondary)]">
+            Aplicada a todos os lançamentos selecionados abaixo.
+          </p>
+        </Card>
+      )}
 
       <div className="flex flex-col gap-3">
         {rows.map((r) => {

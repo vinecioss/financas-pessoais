@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutGrid, ArrowLeftRight, Tags, Upload, LogOut } from "lucide-react";
+import { LayoutGrid, ArrowLeftRight, Wallet, Tags, Upload, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const ITEMS = [
   { href: "/painel", label: "Painel", icon: LayoutGrid },
   { href: "/lancamentos", label: "Lançamentos", icon: ArrowLeftRight },
+  { href: "/contas", label: "Contas", icon: Wallet },
   { href: "/categorias", label: "Categorias", icon: Tags },
   { href: "/importar", label: "Importar", icon: Upload },
 ];

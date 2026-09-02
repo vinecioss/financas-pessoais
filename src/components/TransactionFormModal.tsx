@@ -4,17 +4,19 @@ import { useState } from "react";
 import { X, Trash2 } from "lucide-react";
 import { FORMAS_PAGAMENTO } from "@/lib/constants";
 import { todayISO } from "@/lib/format";
-import type { Category, Tipo, TransactionWithCategory } from "@/types/database";
+import type { Account, Category, Tipo, TransactionWithCategory } from "@/types/database";
 import type { TransactionInput } from "@/lib/queries";
 
 export function TransactionFormModal({
   categories,
+  accounts,
   editing,
   onClose,
   onSave,
   onDelete,
 }: {
   categories: Category[];
+  accounts: Account[];
   editing: TransactionWithCategory | null;
   onClose: () => void;
   onSave: (input: TransactionInput) => Promise<void>;
@@ -23,6 +25,7 @@ export function TransactionFormModal({
   const [tipo, setTipo] = useState<Tipo>(editing?.tipo ?? "despesa");
   const [valor, setValor] = useState(editing ? String(editing.valor) : "");
   const [categoriaId, setCategoriaId] = useState(editing?.categoria_id ?? "");
+  const [contaId, setContaId] = useState(editing?.conta_id ?? "");
   const [data, setData] = useState(editing?.data ?? todayISO());
   const [descricao, setDescricao] = useState(editing?.descricao ?? "");
   const [formaPagamento, setFormaPagamento] = useState(editing?.forma_pagamento ?? "");
@@ -59,6 +62,7 @@ export function TransactionFormModal({
         tipo,
         valor: parsedValor,
         categoria_id: categoriaId,
+        conta_id: contaId || null,
         data,
         descricao: descricao.trim() || null,
         forma_pagamento: formaPagamento || null,
@@ -161,6 +165,21 @@ export function TransactionFormModal({
               {FORMAS_PAGAMENTO.map((f) => (
                 <option key={f} value={f}>
                   {f}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field label="Conta (opcional)">
+            <select
+              value={contaId}
+              onChange={(e) => setContaId(e.target.value)}
+              className="input"
+            >
+              <option value="">Nenhuma</option>
+              {accounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.nome}
                 </option>
               ))}
             </select>

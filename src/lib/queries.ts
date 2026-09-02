@@ -1,7 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
+  Account,
   Budget,
   Category,
+  ContaTipo,
   Tipo,
   TransactionWithCategory,
 } from "@/types/database";
@@ -34,6 +36,42 @@ export async function deleteCategory(supabase: Client, id: string) {
   if (error) throw error;
 }
 
+export async function getAccounts(supabase: Client): Promise<Account[]> {
+  const { data, error } = await supabase
+    .from("accounts")
+    .select("*")
+    .order("created_at");
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function createAccount(
+  supabase: Client,
+  userId: string,
+  tipo: ContaTipo,
+  nome: string,
+  saldoInicial: number
+) {
+  const { error } = await supabase
+    .from("accounts")
+    .insert({ user_id: userId, tipo, nome, saldo_inicial: saldoInicial });
+  if (error) throw error;
+}
+
+export async function updateAccount(
+  supabase: Client,
+  id: string,
+  fields: { nome?: string; saldo_inicial?: number }
+) {
+  const { error } = await supabase.from("accounts").update(fields).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteAccount(supabase: Client, id: string) {
+  const { error } = await supabase.from("accounts").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export async function getBudgets(supabase: Client): Promise<Budget[]> {
   const { data, error } = await supabase.from("budgets").select("*");
   if (error) throw error;
@@ -63,6 +101,8 @@ export async function deleteBudget(supabase: Client, categoriaId: string) {
   if (error) throw error;
 }
 
+const TRANSACTION_SELECT = "*, categories ( id, nome, tipo ), accounts ( id, nome, tipo )";
+
 export async function getTransactionsInRange(
   supabase: Client,
   start: string,
@@ -70,7 +110,7 @@ export async function getTransactionsInRange(
 ): Promise<TransactionWithCategory[]> {
   const { data, error } = await supabase
     .from("transactions")
-    .select("*, categories ( id, nome, tipo )")
+    .select(TRANSACTION_SELECT)
     .gte("data", start)
     .lte("data", end)
     .order("data", { ascending: false })
@@ -84,7 +124,7 @@ export async function getAllTransactions(
 ): Promise<TransactionWithCategory[]> {
   const { data, error } = await supabase
     .from("transactions")
-    .select("*, categories ( id, nome, tipo )")
+    .select(TRANSACTION_SELECT)
     .order("data", { ascending: false })
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -95,6 +135,7 @@ export interface TransactionInput {
   tipo: Tipo;
   valor: number;
   categoria_id: string;
+  conta_id: string | null;
   data: string;
   descricao: string | null;
   forma_pagamento: string | null;

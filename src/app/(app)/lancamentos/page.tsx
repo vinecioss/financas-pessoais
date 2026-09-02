@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import {
   createTransaction,
   deleteTransaction,
+  getAccounts,
   getAllTransactions,
   getCategories,
   updateTransaction,
@@ -15,13 +16,14 @@ import { Header } from "@/components/Header";
 import { Card } from "@/components/Card";
 import { TransactionRow } from "@/components/TransactionRow";
 import { TransactionFormModal } from "@/components/TransactionFormModal";
-import type { Category, TransactionWithCategory } from "@/types/database";
+import type { Account, Category, TransactionWithCategory } from "@/types/database";
 
 type Filter = "todos" | "receita" | "despesa";
 
 export default function LancamentosPage() {
   const [transactions, setTransactions] = useState<TransactionWithCategory[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>("todos");
   const [modalOpen, setModalOpen] = useState(false);
@@ -29,12 +31,14 @@ export default function LancamentosPage() {
 
   async function reload() {
     const supabase = createClient();
-    const [tx, cat] = await Promise.all([
+    const [tx, cat, acc] = await Promise.all([
       getAllTransactions(supabase),
       getCategories(supabase),
+      getAccounts(supabase),
     ]);
     setTransactions(tx);
     setCategories(cat);
+    setAccounts(acc);
   }
 
   useEffect(() => {
@@ -137,6 +141,7 @@ export default function LancamentosPage() {
       {modalOpen && (
         <TransactionFormModal
           categories={categories}
+          accounts={accounts}
           editing={editing}
           onClose={() => {
             setModalOpen(false);
