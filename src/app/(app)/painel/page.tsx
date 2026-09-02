@@ -104,6 +104,9 @@ export default function PainelPage() {
     [accounts, allTransactions, start, end]
   );
 
+  const contasSaldo = contasResumo.filter((c) => c.tipo !== "cartao");
+  const contasCartao = contasResumo.filter((c) => c.tipo === "cartao");
+
   const recentes = transactions.slice(0, 5);
 
   return (
@@ -142,10 +145,10 @@ export default function PainelPage() {
           </Card>
         </div>
 
-        {contasResumo.length > 0 && (
+        {contasSaldo.length > 0 && (
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-sm text-[var(--color-text-secondary)]">Suas contas</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">O que você tem</p>
               <Link
                 href="/contas"
                 className="text-sm text-[var(--color-green)] underline-offset-2 hover:underline"
@@ -154,20 +157,37 @@ export default function PainelPage() {
               </Link>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              {contasResumo.map((c) => (
+              {contasSaldo.map((c) => (
                 <Card key={c.id}>
-                  <p className="text-sm text-[var(--color-text-secondary)]">
-                    {c.nome}
-                    {c.tipo === "cartao" && (
-                      <span className="block text-xs">Fatura do mês</span>
-                    )}
-                  </p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">{c.nome}</p>
                   <p
                     className="num-serif mt-1 text-xl"
                     style={{
-                      color: c.valor < 0 ? "var(--color-expense)" : "var(--color-text)",
+                      color: c.valor < 0 ? "var(--color-expense)" : "var(--color-income)",
                     }}
                   >
+                    {formatCurrency(c.valor)}
+                  </p>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {contasCartao.length > 0 && (
+          <div>
+            <p className="mb-2 text-sm text-[var(--color-text-secondary)]">Faturas em aberto</p>
+            <div className="flex flex-col gap-3">
+              {contasCartao.map((c) => (
+                <Card
+                  key={c.id}
+                  className="flex items-center justify-between border-l-4 border-l-[var(--color-expense)]"
+                >
+                  <div>
+                    <p className="text-[var(--color-text)]">{c.nome}</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">Fatura do mês</p>
+                  </div>
+                  <p className="num-serif text-xl text-[var(--color-expense)]">
                     {formatCurrency(c.valor)}
                   </p>
                 </Card>
