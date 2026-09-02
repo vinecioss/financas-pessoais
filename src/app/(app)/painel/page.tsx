@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { getAccounts, getAllTransactions, getBudgets, getCategories } from "@/lib/queries";
-import { computeAccountBalance, computeCardTotal } from "@/lib/accounts";
+import { computeAccountBalance, computeCardCycleRange, computeCardTotal } from "@/lib/accounts";
 import { formatCurrency, monthRange } from "@/lib/format";
 import { Header } from "@/components/Header";
 import { MonthSelector } from "@/components/MonthSelector";
@@ -92,16 +92,19 @@ export default function PainelPage() {
 
   const contasResumo = useMemo(
     () =>
-      accounts.map((a) => ({
-        id: a.id,
-        nome: a.nome,
-        tipo: a.tipo,
-        valor:
-          a.tipo === "cartao"
-            ? computeCardTotal(a, allTransactions, start, end)
-            : computeAccountBalance(a, allTransactions),
-      })),
-    [accounts, allTransactions, start, end]
+      accounts.map((a) => {
+        if (a.tipo !== "cartao") {
+          return { id: a.id, nome: a.nome, tipo: a.tipo, valor: computeAccountBalance(a, allTransactions) };
+        }
+        const cycle = computeCardCycleRange(a, year, month);
+        return {
+          id: a.id,
+          nome: a.nome,
+          tipo: a.tipo,
+          valor: computeCardTotal(a, allTransactions, cycle.start, cycle.end),
+        };
+      }),
+    [accounts, allTransactions, year, month]
   );
 
   const contasSaldo = contasResumo.filter((c) => c.tipo !== "cartao");

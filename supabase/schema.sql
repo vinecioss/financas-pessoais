@@ -23,8 +23,14 @@ create table if not exists accounts (
   tipo text not null check (tipo in ('conta', 'cartao', 'investimento')),
   nome text not null,
   saldo_inicial numeric(12,2) not null default 0,
+  dia_fechamento smallint check (dia_fechamento between 1 and 31),
+  dia_vencimento smallint check (dia_vencimento between 1 and 31),
   created_at timestamptz default now()
 );
+
+-- Caso a tabela já exista de uma versão anterior do schema, garante as colunas novas.
+alter table accounts add column if not exists dia_fechamento smallint check (dia_fechamento between 1 and 31);
+alter table accounts add column if not exists dia_vencimento smallint check (dia_vencimento between 1 and 31);
 
 create table if not exists transactions (
   id uuid primary key default gen_random_uuid(),

@@ -11,6 +11,8 @@ export function TransactionFormModal({
   categories,
   accounts,
   editing,
+  initial,
+  title,
   onClose,
   onSave,
   onDelete,
@@ -18,17 +20,27 @@ export function TransactionFormModal({
   categories: Category[];
   accounts: Account[];
   editing: TransactionWithCategory | null;
+  /** Preenche um lançamento novo sem entrar no modo de edição (sem botão excluir). */
+  initial?: Partial<TransactionInput>;
+  /** Sobrescreve o título padrão ("Novo lançamento" / "Editar lançamento"). */
+  title?: string;
   onClose: () => void;
   onSave: (input: TransactionInput) => Promise<void>;
   onDelete?: () => Promise<void>;
 }) {
-  const [tipo, setTipo] = useState<Tipo>(editing?.tipo ?? "despesa");
-  const [valor, setValor] = useState(editing ? String(editing.valor) : "");
-  const [categoriaId, setCategoriaId] = useState(editing?.categoria_id ?? "");
-  const [contaId, setContaId] = useState(editing?.conta_id ?? "");
-  const [data, setData] = useState(editing?.data ?? todayISO());
-  const [descricao, setDescricao] = useState(editing?.descricao ?? "");
-  const [formaPagamento, setFormaPagamento] = useState(editing?.forma_pagamento ?? "");
+  const [tipo, setTipo] = useState<Tipo>(editing?.tipo ?? initial?.tipo ?? "despesa");
+  const [valor, setValor] = useState(
+    editing ? String(editing.valor) : initial?.valor ? String(initial.valor) : ""
+  );
+  const [categoriaId, setCategoriaId] = useState(
+    editing?.categoria_id ?? initial?.categoria_id ?? ""
+  );
+  const [contaId, setContaId] = useState(editing?.conta_id ?? initial?.conta_id ?? "");
+  const [data, setData] = useState(editing?.data ?? initial?.data ?? todayISO());
+  const [descricao, setDescricao] = useState(editing?.descricao ?? initial?.descricao ?? "");
+  const [formaPagamento, setFormaPagamento] = useState(
+    editing?.forma_pagamento ?? initial?.forma_pagamento ?? ""
+  );
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +91,7 @@ export function TransactionFormModal({
       <div className="flex max-h-[90dvh] w-full max-w-[420px] flex-col overflow-y-auto rounded-t-2xl bg-[var(--color-surface)] p-6 sm:rounded-2xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="num-serif text-xl text-[var(--color-text)]">
-            {editing ? "Editar lançamento" : "Novo lançamento"}
+            {title ?? (editing ? "Editar lançamento" : "Novo lançamento")}
           </h2>
           <button onClick={onClose} aria-label="Fechar">
             <X size={20} className="text-[var(--color-text-secondary)]" />

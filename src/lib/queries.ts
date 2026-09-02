@@ -61,7 +61,12 @@ export async function createAccount(
 export async function updateAccount(
   supabase: Client,
   id: string,
-  fields: { nome?: string; saldo_inicial?: number }
+  fields: {
+    nome?: string;
+    saldo_inicial?: number;
+    dia_fechamento?: number | null;
+    dia_vencimento?: number | null;
+  }
 ) {
   const { error } = await supabase.from("accounts").update(fields).eq("id", id);
   if (error) throw error;

@@ -25,6 +25,8 @@ export interface Account {
   tipo: ContaTipo;
   nome: string;
   saldo_inicial: number;
+  dia_fechamento: number | null;
+  dia_vencimento: number | null;
   created_at: string;
 }
 

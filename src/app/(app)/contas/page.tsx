@@ -5,17 +5,21 @@ import { Plus, Trash2, Wallet, CreditCard, TrendingUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
   createAccount,
+  createTransaction,
   deleteAccount,
   getAccounts,
   getAllTransactions,
+  getCategories,
   updateAccount,
+  type TransactionInput,
 } from "@/lib/queries";
-import { computeAccountBalance, computeCardTotal } from "@/lib/accounts";
+import { computeAccountBalance, computeCardCycleRange, computeCardTotal } from "@/lib/accounts";
 import { Header } from "@/components/Header";
 import { MonthSelector } from "@/components/MonthSelector";
 import { Card } from "@/components/Card";
-import { formatCurrency, monthLabel, monthRange } from "@/lib/format";
-import type { Account, ContaTipo, TransactionWithCategory } from "@/types/database";
+import { TransactionFormModal } from "@/components/TransactionFormModal";
+import { formatCurrency, monthLabel } from "@/lib/format";
+import type { Account, Category, ContaTipo, TransactionWithCategory } from "@/types/database";
 
 const GROUPS: { tipo: ContaTipo; title: string; icon: typeof Wallet }[] = [
   { tipo: "conta", title: "Contas e vale", icon: Wallet },
@@ -26,16 +30,23 @@ const GROUPS: { tipo: ContaTipo; title: string; icon: typeof Wallet }[] = [
 export default function ContasPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<TransactionWithCategory[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1);
+  const [payingAccount, setPayingAccount] = useState<Account | null>(null);
 
   async function reload() {
     const supabase = createClient();
-    const [acc, tx] = await Promise.all([getAccounts(supabase), getAllTransactions(supabase)]);
+    const [acc, tx, cat] = await Promise.all([
+      getAccounts(supabase),
+      getAllTransactions(supabase),
+      getCategories(supabase),
+    ]);
     setAccounts(acc);
     setTransactions(tx);
+    setCategories(cat);
   }
 
   useEffect(() => {
@@ -43,35 +54,39 @@ export default function ContasPage() {
     reload().finally(() => setLoading(false));
   }, []);
 
-  const { start, end } = monthRange(year, month);
+  async function handlePayment(input: TransactionInput) {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    await createTransaction(supabase, user.id, input);
+    setPayingAccount(null);
+    await reload();
+  }
 
   if (loading) {
     return (
       <div className="flex flex-col">
         <Header title="Contas" subtitle="Saldos, fatura e investimentos" />
-        <p className="mx-auto w-full max-w-3xl px-6 py-4 text-sm text-[var(--color-text-secondary)] lg:px-10">
+        <p className="mx-auto w-full max-w-4xl px-6 py-4 text-sm text-[var(--color-text-secondary)] lg:px-10">
           Carregando...
         </p>
       </div>
     );
   }
 
+  const faturaAtual = (() => {
+    if (!payingAccount) return 0;
+    const cycle = computeCardCycleRange(payingAccount, year, month);
+    return computeCardTotal(payingAccount, transactions, cycle.start, cycle.end);
+  })();
+
   return (
     <div className="flex flex-col">
       <Header title="Contas" subtitle="Saldos, fatura e investimentos" />
 
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 pb-10 lg:px-10">
-        {GROUPS.map((group) => (
-          <AccountGroup
-            key={group.tipo}
-            group={group}
-            accounts={accounts.filter((a) => a.tipo === group.tipo)}
-            transactions={transactions}
-            cardRange={group.tipo === "cartao" ? { start, end } : undefined}
-            onChanged={reload}
-          />
-        ))}
-
         <div>
           <p className="mb-2 mt-2 text-sm text-[var(--color-text-secondary)]">
             Mês da fatura dos cartões
@@ -87,7 +102,37 @@ export default function ContasPage() {
             />
           </Card>
         </div>
+
+        {GROUPS.map((group) => (
+          <AccountGroup
+            key={group.tipo}
+            group={group}
+            accounts={accounts.filter((a) => a.tipo === group.tipo)}
+            transactions={transactions}
+            year={year}
+            month={month}
+            onChanged={reload}
+            onPay={setPayingAccount}
+          />
+        ))}
       </div>
+
+      {payingAccount && (
+        <TransactionFormModal
+          categories={categories}
+          accounts={accounts}
+          editing={null}
+          title={`Pagar fatura — ${payingAccount.nome}`}
+          initial={{
+            tipo: "despesa",
+            valor: faturaAtual > 0 ? faturaAtual : undefined,
+            descricao: `Pagamento fatura ${payingAccount.nome}`,
+            conta_id: null,
+          }}
+          onClose={() => setPayingAccount(null)}
+          onSave={handlePayment}
+        />
+      )}
     </div>
   );
 }
@@ -96,14 +141,18 @@ function AccountGroup({
   group,
   accounts,
   transactions,
-  cardRange,
+  year,
+  month,
   onChanged,
+  onPay,
 }: {
   group: { tipo: ContaTipo; title: string; icon: typeof Wallet };
   accounts: Account[];
   transactions: TransactionWithCategory[];
-  cardRange?: { start: string; end: string };
+  year: number;
+  month: number;
   onChanged: () => Promise<void>;
+  onPay: (account: Account) => void;
 }) {
   const [adding, setAdding] = useState(false);
   const [nome, setNome] = useState("");
@@ -147,10 +196,11 @@ function AccountGroup({
         )}
 
         {accounts.map((account) => {
-          const valor =
-            group.tipo === "cartao" && cardRange
-              ? computeCardTotal(account, transactions, cardRange.start, cardRange.end)
-              : computeAccountBalance(account, transactions);
+          const cycle =
+            group.tipo === "cartao" ? computeCardCycleRange(account, year, month) : null;
+          const valor = cycle
+            ? computeCardTotal(account, transactions, cycle.start, cycle.end)
+            : computeAccountBalance(account, transactions);
           const negativo = valor < 0;
 
           return (
@@ -158,9 +208,10 @@ function AccountGroup({
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-[var(--color-text)]">{account.nome}</p>
-                  {group.tipo === "cartao" && cardRange && (
+                  {cycle && (
                     <p className="text-xs text-[var(--color-text-secondary)]">
-                      Fatura de {monthLabelFromRange(cardRange)}
+                      Fatura de {monthLabel(year, month)}
+                      {account.dia_vencimento && ` · vence dia ${account.dia_vencimento}`}
                     </p>
                   )}
                 </div>
@@ -200,7 +251,17 @@ function AccountGroup({
                 </div>
               </div>
 
-              {group.tipo !== "cartao" && (
+              {group.tipo === "cartao" ? (
+                <>
+                  <CycleFields account={account} onChanged={onChanged} />
+                  <button
+                    onClick={() => onPay(account)}
+                    className="self-start text-xs font-medium text-[var(--color-green)] underline-offset-2 hover:underline"
+                  >
+                    Pagar fatura
+                  </button>
+                </>
+              ) : (
                 <SaldoInicialField account={account} onChanged={onChanged} />
               )}
             </div>
@@ -260,11 +321,6 @@ function AccountGroup({
   );
 }
 
-function monthLabelFromRange({ start }: { start: string }) {
-  const [year, month] = start.split("-").map(Number);
-  return monthLabel(year, month);
-}
-
 function SaldoInicialField({
   account,
   onChanged,
@@ -312,6 +368,83 @@ function SaldoInicialField({
         onClick={() => {
           setEditing(false);
           setValue(String(account.saldo_inicial));
+        }}
+        className="text-sm text-[var(--color-text-secondary)]"
+      >
+        Cancelar
+      </button>
+    </div>
+  );
+}
+
+function CycleFields({
+  account,
+  onChanged,
+}: {
+  account: Account;
+  onChanged: () => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [fechamento, setFechamento] = useState(
+    account.dia_fechamento ? String(account.dia_fechamento) : ""
+  );
+  const [vencimento, setVencimento] = useState(
+    account.dia_vencimento ? String(account.dia_vencimento) : ""
+  );
+
+  async function handleSave() {
+    const supabase = createClient();
+    const f = Number(fechamento);
+    const v = Number(vencimento);
+    await updateAccount(supabase, account.id, {
+      dia_fechamento: f >= 1 && f <= 31 ? f : null,
+      dia_vencimento: v >= 1 && v <= 31 ? v : null,
+    });
+    setEditing(false);
+    await onChanged();
+  }
+
+  if (!editing) {
+    return (
+      <button
+        onClick={() => setEditing(true)}
+        className="self-start text-xs text-[var(--color-text-secondary)] underline-offset-2 hover:underline"
+      >
+        {account.dia_fechamento
+          ? `Fecha dia ${account.dia_fechamento}`
+          : "Definir dia de fechamento"}
+        {account.dia_vencimento && `, vence dia ${account.dia_vencimento}`}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <input
+        autoFocus
+        inputMode="numeric"
+        value={fechamento}
+        onChange={(e) => setFechamento(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && handleSave()}
+        placeholder="Dia fecha"
+        className="w-24 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-sm outline-none focus:border-[var(--color-green)]"
+      />
+      <input
+        inputMode="numeric"
+        value={vencimento}
+        onChange={(e) => setVencimento(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && handleSave()}
+        placeholder="Dia vence"
+        className="w-24 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-sm outline-none focus:border-[var(--color-green)]"
+      />
+      <button onClick={handleSave} className="text-sm font-medium text-[var(--color-green)]">
+        Salvar
+      </button>
+      <button
+        onClick={() => {
+          setEditing(false);
+          setFechamento(account.dia_fechamento ? String(account.dia_fechamento) : "");
+          setVencimento(account.dia_vencimento ? String(account.dia_vencimento) : "");
         }}
         className="text-sm text-[var(--color-text-secondary)]"
       >
