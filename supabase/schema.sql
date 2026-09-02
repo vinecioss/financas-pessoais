@@ -64,39 +64,55 @@ alter table accounts enable row level security;
 alter table transactions enable row level security;
 alter table budgets enable row level security;
 
+drop policy if exists "categories_select_own" on categories;
 create policy "categories_select_own" on categories
   for select using (auth.uid() = user_id);
+drop policy if exists "categories_insert_own" on categories;
 create policy "categories_insert_own" on categories
   for insert with check (auth.uid() = user_id);
+drop policy if exists "categories_update_own" on categories;
 create policy "categories_update_own" on categories
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "categories_delete_own" on categories;
 create policy "categories_delete_own" on categories
   for delete using (auth.uid() = user_id);
 
+drop policy if exists "accounts_select_own" on accounts;
 create policy "accounts_select_own" on accounts
   for select using (auth.uid() = user_id);
+drop policy if exists "accounts_insert_own" on accounts;
 create policy "accounts_insert_own" on accounts
   for insert with check (auth.uid() = user_id);
+drop policy if exists "accounts_update_own" on accounts;
 create policy "accounts_update_own" on accounts
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "accounts_delete_own" on accounts;
 create policy "accounts_delete_own" on accounts
   for delete using (auth.uid() = user_id);
 
+drop policy if exists "transactions_select_own" on transactions;
 create policy "transactions_select_own" on transactions
   for select using (auth.uid() = user_id);
+drop policy if exists "transactions_insert_own" on transactions;
 create policy "transactions_insert_own" on transactions
   for insert with check (auth.uid() = user_id);
+drop policy if exists "transactions_update_own" on transactions;
 create policy "transactions_update_own" on transactions
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "transactions_delete_own" on transactions;
 create policy "transactions_delete_own" on transactions
   for delete using (auth.uid() = user_id);
 
+drop policy if exists "budgets_select_own" on budgets;
 create policy "budgets_select_own" on budgets
   for select using (auth.uid() = user_id);
+drop policy if exists "budgets_insert_own" on budgets;
 create policy "budgets_insert_own" on budgets
   for insert with check (auth.uid() = user_id);
+drop policy if exists "budgets_update_own" on budgets;
 create policy "budgets_update_own" on budgets
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "budgets_delete_own" on budgets;
 create policy "budgets_delete_own" on budgets
   for delete using (auth.uid() = user_id);
 
