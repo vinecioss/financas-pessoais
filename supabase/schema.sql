@@ -32,6 +32,21 @@ create table if not exists accounts (
 alter table accounts add column if not exists dia_fechamento smallint check (dia_fechamento between 1 and 31);
 alter table accounts add column if not exists dia_vencimento smallint check (dia_vencimento between 1 and 31);
 
+-- gastos fixos: despesas recorrentes mensais (aluguel, assinaturas...).
+-- É só um "modelo" — pagar um gasto fixo cria um lançamento normal
+-- vinculado a ele; no mês seguinte, sem lançamento novo, ele volta a
+-- aparecer como pendente.
+create table if not exists gastos_fixos (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users not null,
+  nome text not null,
+  valor numeric(12,2) not null,
+  categoria_id uuid references categories not null,
+  conta_id uuid references accounts on delete set null,
+  dia_vencimento smallint check (dia_vencimento between 1 and 31),
+  created_at timestamptz default now()
+);
+
 create table if not exists transactions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users not null,
@@ -39,14 +54,16 @@ create table if not exists transactions (
   valor numeric(12,2) not null,
   categoria_id uuid references categories not null,
   conta_id uuid references accounts on delete set null,
+  gasto_fixo_id uuid references gastos_fixos on delete set null,
   data date not null,
   descricao text,
   forma_pagamento text,
   created_at timestamptz default now()
 );
 
--- Caso a tabela já exista de uma versão anterior do schema, garante a coluna nova.
+-- Caso a tabela já exista de uma versão anterior do schema, garante as colunas novas.
 alter table transactions add column if not exists conta_id uuid references accounts on delete set null;
+alter table transactions add column if not exists gasto_fixo_id uuid references gastos_fixos on delete set null;
 
 create table if not exists budgets (
   id uuid primary key default gen_random_uuid(),
@@ -58,8 +75,10 @@ create table if not exists budgets (
 
 create index if not exists transactions_user_data_idx on transactions (user_id, data desc);
 create index if not exists transactions_user_conta_idx on transactions (user_id, conta_id);
+create index if not exists transactions_user_gasto_fixo_idx on transactions (user_id, gasto_fixo_id);
 create index if not exists categories_user_tipo_idx on categories (user_id, tipo);
 create index if not exists accounts_user_idx on accounts (user_id);
+create index if not exists gastos_fixos_user_idx on gastos_fixos (user_id);
 
 -- ─────────────────────────────────────────────
 -- Row Level Security
@@ -67,6 +86,7 @@ create index if not exists accounts_user_idx on accounts (user_id);
 
 alter table categories enable row level security;
 alter table accounts enable row level security;
+alter table gastos_fixos enable row level security;
 alter table transactions enable row level security;
 alter table budgets enable row level security;
 
@@ -94,6 +114,19 @@ create policy "accounts_update_own" on accounts
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 drop policy if exists "accounts_delete_own" on accounts;
 create policy "accounts_delete_own" on accounts
+  for delete using (auth.uid() = user_id);
+
+drop policy if exists "gastos_fixos_select_own" on gastos_fixos;
+create policy "gastos_fixos_select_own" on gastos_fixos
+  for select using (auth.uid() = user_id);
+drop policy if exists "gastos_fixos_insert_own" on gastos_fixos;
+create policy "gastos_fixos_insert_own" on gastos_fixos
+  for insert with check (auth.uid() = user_id);
+drop policy if exists "gastos_fixos_update_own" on gastos_fixos;
+create policy "gastos_fixos_update_own" on gastos_fixos
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "gastos_fixos_delete_own" on gastos_fixos;
+create policy "gastos_fixos_delete_own" on gastos_fixos
   for delete using (auth.uid() = user_id);
 
 drop policy if exists "transactions_select_own" on transactions;

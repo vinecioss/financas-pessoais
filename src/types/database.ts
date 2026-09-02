@@ -30,6 +30,17 @@ export interface Account {
   created_at: string;
 }
 
+export interface GastoFixo {
+  id: string;
+  user_id: string;
+  nome: string;
+  valor: number;
+  categoria_id: string;
+  conta_id: string | null;
+  dia_vencimento: number | null;
+  created_at: string;
+}
+
 export interface Transaction {
   id: string;
   user_id: string;
@@ -37,6 +48,7 @@ export interface Transaction {
   valor: number;
   categoria_id: string;
   conta_id: string | null;
+  gasto_fixo_id: string | null;
   data: string;
   descricao: string | null;
   forma_pagamento: string | null;

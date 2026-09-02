@@ -4,6 +4,7 @@ import type {
   Budget,
   Category,
   ContaTipo,
+  GastoFixo,
   Tipo,
   TransactionWithCategory,
 } from "@/types/database";
@@ -106,6 +107,48 @@ export async function deleteBudget(supabase: Client, categoriaId: string) {
   if (error) throw error;
 }
 
+export async function getGastosFixos(supabase: Client): Promise<GastoFixo[]> {
+  const { data, error } = await supabase
+    .from("gastos_fixos")
+    .select("*")
+    .order("nome");
+  if (error) throw error;
+  return data ?? [];
+}
+
+export interface GastoFixoInput {
+  nome: string;
+  valor: number;
+  categoria_id: string;
+  conta_id: string | null;
+  dia_vencimento: number | null;
+}
+
+export async function createGastoFixo(
+  supabase: Client,
+  userId: string,
+  input: GastoFixoInput
+) {
+  const { error } = await supabase
+    .from("gastos_fixos")
+    .insert({ ...input, user_id: userId });
+  if (error) throw error;
+}
+
+export async function updateGastoFixo(
+  supabase: Client,
+  id: string,
+  input: GastoFixoInput
+) {
+  const { error } = await supabase.from("gastos_fixos").update(input).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteGastoFixo(supabase: Client, id: string) {
+  const { error } = await supabase.from("gastos_fixos").delete().eq("id", id);
+  if (error) throw error;
+}
+
 const TRANSACTION_SELECT = "*, categories ( id, nome, tipo ), accounts ( id, nome, tipo )";
 
 export async function getTransactionsInRange(
@@ -144,6 +187,7 @@ export interface TransactionInput {
   data: string;
   descricao: string | null;
   forma_pagamento: string | null;
+  gasto_fixo_id?: string | null;
 }
 
 export async function createTransaction(
