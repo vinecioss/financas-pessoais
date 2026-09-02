@@ -143,8 +143,8 @@ export default function PainelPage() {
         </div>
 
         {contasResumo.length > 0 && (
-          <Card>
-            <div className="mb-1 flex items-center justify-between">
+          <div>
+            <div className="mb-2 flex items-center justify-between">
               <p className="text-sm text-[var(--color-text-secondary)]">Suas contas</p>
               <Link
                 href="/contas"
@@ -153,29 +153,27 @@ export default function PainelPage() {
                 Ver todas
               </Link>
             </div>
-            <div className="flex flex-col divide-y divide-[var(--color-border)]">
+            <div className="grid grid-cols-2 gap-4">
               {contasResumo.map((c) => (
-                <div key={c.id} className="flex items-center justify-between py-3">
-                  <span className="text-sm text-[var(--color-text)]">
+                <Card key={c.id}>
+                  <p className="text-sm text-[var(--color-text-secondary)]">
                     {c.nome}
                     {c.tipo === "cartao" && (
-                      <span className="ml-1.5 text-xs text-[var(--color-text-secondary)]">
-                        (fatura do mês)
-                      </span>
+                      <span className="block text-xs">Fatura do mês</span>
                     )}
-                  </span>
-                  <span
-                    className="num-serif text-sm"
+                  </p>
+                  <p
+                    className="num-serif mt-1 text-xl"
                     style={{
                       color: c.valor < 0 ? "var(--color-expense)" : "var(--color-text)",
                     }}
                   >
                     {formatCurrency(c.valor)}
-                  </span>
-                </div>
+                  </p>
+                </Card>
               ))}
             </div>
-          </Card>
+          </div>
         )}
 
         <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-start">
