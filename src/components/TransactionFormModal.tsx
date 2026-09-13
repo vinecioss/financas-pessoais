@@ -33,7 +33,10 @@ export function TransactionFormModal({
     editing ? String(editing.valor) : initial?.valor ? String(initial.valor) : ""
   );
   const [categoriaId, setCategoriaId] = useState(
-    editing?.categoria_id ?? initial?.categoria_id ?? ""
+    editing?.categoria_id ??
+      initial?.categoria_id ??
+      categories.find((c) => c.tipo === tipo)?.id ??
+      ""
   );
   const [contaId, setContaId] = useState(editing?.conta_id ?? initial?.conta_id ?? "");
   const [data, setData] = useState(editing?.data ?? initial?.data ?? todayISO());
