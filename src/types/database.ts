@@ -1,14 +1,5 @@
 export type Tipo = "receita" | "despesa";
 
-export type FormaPagamento =
-  | "Pix"
-  | "Dinheiro"
-  | "Cartão de Débito"
-  | "Cartão de Crédito"
-  | "Vale Alimentação"
-  | "Transferência"
-  | "Boleto";
-
 export type ContaTipo = "conta" | "cartao" | "investimento";
 
 export interface Category {
@@ -52,7 +43,6 @@ export interface Transaction {
   gasto_fixo_id: string | null;
   data: string;
   descricao: string | null;
-  forma_pagamento: string | null;
   created_at: string;
 }
 

@@ -187,7 +187,6 @@ export interface TransactionInput {
   conta_id: string | null;
   data: string;
   descricao: string | null;
-  forma_pagamento: string | null;
   gasto_fixo_id?: string | null;
 }
 

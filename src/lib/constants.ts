@@ -1,15 +1,3 @@
-import type { FormaPagamento } from "@/types/database";
-
-export const FORMAS_PAGAMENTO: FormaPagamento[] = [
-  "Pix",
-  "Dinheiro",
-  "Cartão de Débito",
-  "Cartão de Crédito",
-  "Vale Alimentação",
-  "Transferência",
-  "Boleto",
-];
-
 export const CATEGORIAS_PADRAO_RECEITA = [
   "Salário Fixo",
   "Vale Alimentação",

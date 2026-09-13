@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { X, Trash2 } from "lucide-react";
-import { FORMAS_PAGAMENTO } from "@/lib/constants";
 import { todayISO } from "@/lib/format";
 import type { Account, Category, Tipo, TransactionWithCategory } from "@/types/database";
 import type { TransactionInput } from "@/lib/queries";
@@ -38,12 +37,11 @@ export function TransactionFormModal({
       categories.find((c) => c.tipo === tipo)?.id ??
       ""
   );
-  const [contaId, setContaId] = useState(editing?.conta_id ?? initial?.conta_id ?? "");
+  const [contaId, setContaId] = useState(
+    editing?.conta_id ?? initial?.conta_id ?? accounts[0]?.id ?? ""
+  );
   const [data, setData] = useState(editing?.data ?? initial?.data ?? todayISO());
   const [descricao, setDescricao] = useState(editing?.descricao ?? initial?.descricao ?? "");
-  const [formaPagamento, setFormaPagamento] = useState(
-    editing?.forma_pagamento ?? initial?.forma_pagamento ?? ""
-  );
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,16 +69,19 @@ export function TransactionFormModal({
       setError("Selecione uma categoria.");
       return;
     }
+    if (!contaId) {
+      setError("Selecione uma conta.");
+      return;
+    }
     setSaving(true);
     try {
       await onSave({
         tipo,
         valor: parsedValor,
         categoria_id: categoriaId,
-        conta_id: contaId || null,
+        conta_id: contaId,
         data,
         descricao: descricao.trim() || null,
-        forma_pagamento: formaPagamento || null,
       });
     } catch {
       setError("Não foi possível salvar. Tente novamente.");
@@ -170,28 +171,13 @@ export function TransactionFormModal({
             />
           </Field>
 
-          <Field label="Forma de pagamento">
-            <select
-              value={formaPagamento}
-              onChange={(e) => setFormaPagamento(e.target.value)}
-              className="input"
-            >
-              <option value="">Não informado</option>
-              {FORMAS_PAGAMENTO.map((f) => (
-                <option key={f} value={f}>
-                  {f}
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          <Field label="Conta (opcional)">
+          <Field label="Conta">
             <select
               value={contaId}
               onChange={(e) => setContaId(e.target.value)}
               className="input"
             >
-              <option value="">Nenhuma</option>
+              {accounts.length === 0 && <option value="">Nenhuma conta cadastrada</option>}
               {accounts.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.nome}

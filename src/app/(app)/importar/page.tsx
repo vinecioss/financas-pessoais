@@ -47,6 +47,7 @@ export default function ImportarPage() {
     Promise.all([getCategories(supabase), getAccounts(supabase)]).then(([cat, acc]) => {
       setCategories(cat);
       setAccounts(acc);
+      setContaId((current) => current || acc[0]?.id || "");
     });
   }, []);
 
@@ -112,6 +113,10 @@ export default function ImportarPage() {
   const includedCount = rows.filter((r) => r.include).length;
 
   async function handleImport() {
+    if (!contaId) {
+      setError("Selecione a conta desta importação.");
+      return;
+    }
     setImporting(true);
     setError(null);
     const supabase = createClient();
@@ -132,10 +137,9 @@ export default function ImportarPage() {
           tipo: r.tipo,
           valor: r.valor,
           categoria_id: r.categoria_id,
-          conta_id: contaId || null,
+          conta_id: contaId,
           data: r.data,
           descricao: r.descricao || null,
-          forma_pagamento: null,
         });
         count++;
       }
@@ -344,17 +348,16 @@ function ReviewStep({
     <div className="flex flex-col gap-4">
       <p className="text-sm text-[var(--color-text-secondary)]">{totalLabel}</p>
 
-      {accounts.length > 0 && (
+      {accounts.length > 0 ? (
         <Card>
           <label className="mb-1.5 block text-sm text-[var(--color-text-secondary)]">
-            Conta desta importação (opcional)
+            Conta desta importação
           </label>
           <select
             value={contaId}
             onChange={(e) => onContaChange(e.target.value)}
             className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm outline-none focus:border-[var(--color-green)]"
           >
-            <option value="">Nenhuma</option>
             {accounts.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.nome}
@@ -365,6 +368,10 @@ function ReviewStep({
             Aplicada a todos os lançamentos selecionados abaixo.
           </p>
         </Card>
+      ) : (
+        <p className="rounded-lg border border-[var(--color-expense)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[var(--color-expense)]">
+          Cadastre uma conta na aba Contas antes de importar.
+        </p>
       )}
 
       <div className="flex flex-col gap-3">
@@ -445,7 +452,7 @@ function ReviewStep({
 
       <button
         onClick={onImport}
-        disabled={importing || includedCount === 0}
+        disabled={importing || includedCount === 0 || !contaId}
         className="sticky bottom-4 rounded-lg bg-[var(--color-green)] py-3 text-sm font-medium text-[var(--color-bg)] disabled:opacity-50"
       >
         {importing ? "Importando..." : `Importar ${includedCount} lançamento${includedCount === 1 ? "" : "s"}`}

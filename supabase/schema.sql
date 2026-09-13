@@ -62,13 +62,14 @@ create table if not exists transactions (
   gasto_fixo_id uuid references gastos_fixos on delete set null,
   data date not null,
   descricao text,
-  forma_pagamento text,
   created_at timestamptz default now()
 );
 
 -- Caso a tabela já exista de uma versão anterior do schema, garante as colunas novas.
 alter table transactions add column if not exists conta_id uuid references accounts on delete set null;
 alter table transactions add column if not exists gasto_fixo_id uuid references gastos_fixos on delete set null;
+-- forma_pagamento foi substituído pelo campo Conta (que de fato rastreia saldo).
+alter table transactions drop column if exists forma_pagamento;
 
 create table if not exists budgets (
   id uuid primary key default gen_random_uuid(),
