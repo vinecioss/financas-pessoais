@@ -117,6 +117,7 @@ export async function getGastosFixos(supabase: Client): Promise<GastoFixo[]> {
 }
 
 export interface GastoFixoInput {
+  tipo: Tipo;
   nome: string;
   valor: number;
   categoria_id: string;

@@ -33,6 +33,7 @@ export interface Account {
 export interface GastoFixo {
   id: string;
   user_id: string;
+  tipo: Tipo;
   nome: string;
   valor: number;
   categoria_id: string;

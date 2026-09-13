@@ -16,13 +16,52 @@ import {
   type GastoFixoInput,
   type TransactionInput,
 } from "@/lib/queries";
-import { computeGastosFixosStatus, summarizeGastosFixos } from "@/lib/gastosFixos";
+import {
+  computeGastosFixosStatus,
+  summarizeGastosFixos,
+  type GastoFixoStatus,
+} from "@/lib/gastosFixos";
 import { Header } from "@/components/Header";
 import { MonthSelector } from "@/components/MonthSelector";
 import { Card } from "@/components/Card";
 import { TransactionFormModal } from "@/components/TransactionFormModal";
-import { formatCurrency, todayISO } from "@/lib/format";
-import type { Account, Category, GastoFixo, TransactionWithCategory } from "@/types/database";
+import { daysInMonth, formatCurrency, todayISO } from "@/lib/format";
+import type {
+  Account,
+  Category,
+  GastoFixo,
+  Tipo,
+  TransactionWithCategory,
+} from "@/types/database";
+
+const GROUPS: {
+  tipo: Tipo;
+  title: string;
+  addLabel: string;
+  actionLabel: string;
+  paidLabel: string;
+  pendingLabel: string;
+  accentColor: string;
+}[] = [
+  {
+    tipo: "receita",
+    title: "Ganhos fixos",
+    addLabel: "Adicionar ganho fixo",
+    actionLabel: "Receber",
+    paidLabel: "Recebido",
+    pendingLabel: "A receber",
+    accentColor: "var(--color-income)",
+  },
+  {
+    tipo: "despesa",
+    title: "Gastos fixos",
+    addLabel: "Adicionar gasto fixo",
+    actionLabel: "Pagar",
+    paidLabel: "Pago",
+    pendingLabel: "Pendente",
+    accentColor: "var(--color-expense)",
+  },
+];
 
 export default function GastosFixosPage() {
   const [gastosFixos, setGastosFixos] = useState<GastoFixo[]>([]);
@@ -33,14 +72,7 @@ export default function GastosFixosPage() {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1);
-
-  const [adding, setAdding] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [payingGasto, setPayingGasto] = useState<GastoFixo | null>(null);
-  const [undoing, setUndoing] = useState<string | null>(null);
-
-  const despesaCategories = categories.filter((c) => c.tipo === "despesa");
 
   async function reload() {
     const supabase = createClient();
@@ -62,7 +94,11 @@ export default function GastosFixosPage() {
   }, []);
 
   const status = computeGastosFixosStatus(gastosFixos, transactions, year, month);
-  const { total, pago, pendente } = summarizeGastosFixos(status);
+  const receitaStatus = status.filter((s) => s.gastoFixo.tipo === "receita");
+  const despesaStatus = status.filter((s) => s.gastoFixo.tipo === "despesa");
+  const receitaTotal = summarizeGastosFixos(receitaStatus).total;
+  const despesaTotal = summarizeGastosFixos(despesaStatus).total;
+  const saldoFixo = receitaTotal - despesaTotal;
 
   async function handleSaveGastoFixo(id: string | null, input: GastoFixoInput) {
     const supabase = createClient();
@@ -75,15 +111,12 @@ export default function GastosFixosPage() {
       if (!user) return;
       await createGastoFixo(supabase, user.id, input);
     }
-    setAdding(false);
-    setEditingId(null);
     await reload();
   }
 
   async function handleRemove(id: string) {
     const supabase = createClient();
     await deleteGastoFixo(supabase, id);
-    setConfirmDeleteId(null);
     await reload();
   }
 
@@ -100,17 +133,15 @@ export default function GastosFixosPage() {
   }
 
   async function handleUndo(transacaoId: string) {
-    setUndoing(transacaoId);
     const supabase = createClient();
     await deleteTransaction(supabase, transacaoId);
     await reload();
-    setUndoing(null);
   }
 
   if (loading) {
     return (
       <div className="flex flex-col">
-        <Header title="Gastos fixos" subtitle="Suas contas recorrentes" />
+        <Header title="Lançamentos fixos" subtitle="Ganhos e gastos que se repetem todo mês" />
         <p className="mx-auto w-full max-w-3xl px-6 py-4 text-sm text-[var(--color-text-secondary)] lg:px-10">
           Carregando...
         </p>
@@ -118,9 +149,11 @@ export default function GastosFixosPage() {
     );
   }
 
+  const paying = payingGasto;
+
   return (
     <div className="flex flex-col">
-      <Header title="Gastos fixos" subtitle="Suas contas recorrentes" />
+      <Header title="Lançamentos fixos" subtitle="Ganhos e gastos que se repetem todo mês" />
 
       <div className="mx-auto w-full max-w-3xl lg:px-4">
         <MonthSelector
@@ -133,147 +166,49 @@ export default function GastosFixosPage() {
         />
       </div>
 
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-6 pb-10 lg:px-10">
-        <div className="grid grid-cols-3 gap-3">
-          <Card>
-            <p className="text-xs text-[var(--color-text-secondary)]">Total</p>
-            <p className="num-serif mt-1 text-lg">{formatCurrency(total)}</p>
-          </Card>
-          <Card>
-            <p className="text-xs text-[var(--color-text-secondary)]">Pago</p>
-            <p className="num-serif mt-1 text-lg text-[var(--color-income)]">
-              {formatCurrency(pago)}
-            </p>
-          </Card>
-          <Card>
-            <p className="text-xs text-[var(--color-text-secondary)]">Pendente</p>
-            <p className="num-serif mt-1 text-lg text-[var(--color-expense)]">
-              {formatCurrency(pendente)}
-            </p>
-          </Card>
-        </div>
-
-        <Card className="flex flex-col divide-y divide-[var(--color-border)] p-0">
-          {status.length === 0 && !adding && (
-            <p className="px-5 py-4 text-sm text-[var(--color-text-secondary)]">
-              Nenhum gasto fixo cadastrado.
-            </p>
-          )}
-
-          {status.map(({ gastoFixo, pago: isPago, transacao }) => (
-            <div key={gastoFixo.id} className="px-5 py-4">
-              {editingId === gastoFixo.id ? (
-                <GastoFixoForm
-                  categories={despesaCategories}
-                  accounts={accounts}
-                  initial={gastoFixo}
-                  onSave={(input) => handleSaveGastoFixo(gastoFixo.id, input)}
-                  onCancel={() => setEditingId(null)}
-                />
-              ) : (
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-[var(--color-text)]">{gastoFixo.nome}</p>
-                    <p className="text-xs text-[var(--color-text-secondary)]">
-                      {formatCurrency(Number(gastoFixo.valor))}
-                      {gastoFixo.dia_vencimento && ` · vence dia ${gastoFixo.dia_vencimento}`}
-                    </p>
-
-                    {isPago && transacao ? (
-                      <div className="mt-2 flex items-center gap-2">
-                        <span className="flex items-center gap-1 text-xs text-[var(--color-income)]">
-                          <Check size={14} /> Pago
-                        </span>
-                        <button
-                          onClick={() => handleUndo(transacao.id)}
-                          disabled={undoing === transacao.id}
-                          className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)] underline-offset-2 hover:underline disabled:opacity-50"
-                        >
-                          <Undo2 size={12} />
-                          Desfazer
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setPayingGasto(gastoFixo)}
-                        className="mt-2 rounded-full bg-[var(--color-green)] px-3 py-1 text-xs font-medium text-[var(--color-bg)]"
-                      >
-                        Pagar
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="flex shrink-0 items-center gap-3">
-                    <button
-                      onClick={() => setEditingId(gastoFixo.id)}
-                      aria-label={`Editar ${gastoFixo.nome}`}
-                      className="text-[var(--color-text-secondary)]"
-                    >
-                      <Pencil size={16} />
-                    </button>
-                    {confirmDeleteId === gastoFixo.id ? (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleRemove(gastoFixo.id)}
-                          className="text-sm font-medium text-[var(--color-expense)]"
-                        >
-                          Confirmar
-                        </button>
-                        <button
-                          onClick={() => setConfirmDeleteId(null)}
-                          className="text-sm text-[var(--color-text-secondary)]"
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setConfirmDeleteId(gastoFixo.id)}
-                        aria-label={`Remover ${gastoFixo.nome}`}
-                        className="text-[var(--color-text-secondary)]"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-
-          <div className="px-5 py-4">
-            {adding ? (
-              <GastoFixoForm
-                categories={despesaCategories}
-                accounts={accounts}
-                onSave={(input) => handleSaveGastoFixo(null, input)}
-                onCancel={() => setAdding(false)}
-              />
-            ) : (
-              <button
-                onClick={() => setAdding(true)}
-                className="flex items-center gap-1.5 text-sm text-[var(--color-green)]"
-              >
-                <Plus size={16} />
-                Adicionar gasto fixo
-              </button>
-            )}
-          </div>
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 pb-10 lg:px-10">
+        <Card className="text-center">
+          <p className="text-sm text-[var(--color-text-secondary)]">Saldo fixo do mês</p>
+          <p
+            className="num-serif mt-1 text-3xl"
+            style={{ color: saldoFixo >= 0 ? "var(--color-income)" : "var(--color-expense)" }}
+          >
+            {formatCurrency(saldoFixo)}
+          </p>
+          <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
+            Ganhos fixos menos gastos fixos, considerando todos cadastrados
+          </p>
         </Card>
+
+        {GROUPS.map((group) => (
+          <GastoFixoGroup
+            key={group.tipo}
+            group={group}
+            items={group.tipo === "receita" ? receitaStatus : despesaStatus}
+            categories={categories.filter((c) => c.tipo === group.tipo)}
+            accounts={accounts}
+            year={year}
+            month={month}
+            onSave={handleSaveGastoFixo}
+            onRemove={handleRemove}
+            onPay={setPayingGasto}
+            onUndo={handleUndo}
+          />
+        ))}
       </div>
 
-      {payingGasto && (
+      {paying && (
         <TransactionFormModal
           categories={categories}
           accounts={accounts}
           editing={null}
-          title={`Pagar — ${payingGasto.nome}`}
+          title={`${paying.tipo === "receita" ? "Receber" : "Pagar"} — ${paying.nome}`}
           initial={{
-            tipo: "despesa",
-            valor: Number(payingGasto.valor),
-            categoria_id: payingGasto.categoria_id,
-            conta_id: payingGasto.conta_id,
-            descricao: payingGasto.nome,
+            tipo: paying.tipo,
+            valor: Number(paying.valor),
+            categoria_id: paying.categoria_id,
+            conta_id: paying.conta_id,
+            descricao: paying.nome,
             data: todayISO(),
           }}
           onClose={() => setPayingGasto(null)}
@@ -284,13 +219,183 @@ export default function GastosFixosPage() {
   );
 }
 
+function GastoFixoGroup({
+  group,
+  items,
+  categories,
+  accounts,
+  year,
+  month,
+  onSave,
+  onRemove,
+  onPay,
+  onUndo,
+}: {
+  group: (typeof GROUPS)[number];
+  items: GastoFixoStatus[];
+  categories: Category[];
+  accounts: Account[];
+  year: number;
+  month: number;
+  onSave: (id: string | null, input: GastoFixoInput) => Promise<void>;
+  onRemove: (id: string) => Promise<void>;
+  onPay: (gastoFixo: GastoFixo) => void;
+  onUndo: (transacaoId: string) => Promise<void>;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [undoingId, setUndoingId] = useState<string | null>(null);
+
+  const { pago, pendente } = summarizeGastosFixos(items);
+
+  async function handleUndoClick(transacaoId: string) {
+    setUndoingId(transacaoId);
+    await onUndo(transacaoId);
+    setUndoingId(null);
+  }
+
+  return (
+    <div>
+      <div className="mb-2 flex items-baseline justify-between">
+        <p className="text-sm text-[var(--color-text-secondary)]">{group.title}</p>
+        <p className="text-xs text-[var(--color-text-secondary)]">
+          {group.paidLabel} {formatCurrency(pago)} · {group.pendingLabel} {formatCurrency(pendente)}
+        </p>
+      </div>
+
+      <Card className="flex flex-col divide-y divide-[var(--color-border)] p-0">
+        {items.length === 0 && !adding && (
+          <p className="px-5 py-4 text-sm text-[var(--color-text-secondary)]">
+            Nenhum {group.tipo === "receita" ? "ganho" : "gasto"} fixo cadastrado.
+          </p>
+        )}
+
+        {items.map(({ gastoFixo, pago: isPago, transacao }) => (
+          <div key={gastoFixo.id} className="px-5 py-4">
+            {editingId === gastoFixo.id ? (
+              <GastoFixoForm
+                tipo={group.tipo}
+                categories={categories}
+                accounts={accounts}
+                initial={gastoFixo}
+                onSave={async (input) => {
+                  await onSave(gastoFixo.id, input);
+                  setEditingId(null);
+                }}
+                onCancel={() => setEditingId(null)}
+              />
+            ) : (
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-[var(--color-text)]">{gastoFixo.nome}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">
+                    {formatCurrency(Number(gastoFixo.valor))}
+                    {gastoFixo.dia_vencimento &&
+                      ` · vence dia ${Math.min(gastoFixo.dia_vencimento, daysInMonth(year, month))}`}
+                  </p>
+
+                  {isPago && transacao ? (
+                    <div className="mt-2 flex items-center gap-2">
+                      <span
+                        className="flex items-center gap-1 text-xs"
+                        style={{ color: group.accentColor }}
+                      >
+                        <Check size={14} /> {group.paidLabel}
+                      </span>
+                      <button
+                        onClick={() => handleUndoClick(transacao.id)}
+                        disabled={undoingId === transacao.id}
+                        className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)] underline-offset-2 hover:underline disabled:opacity-50"
+                      >
+                        <Undo2 size={12} />
+                        Desfazer
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => onPay(gastoFixo)}
+                      className="mt-2 rounded-full bg-[var(--color-green)] px-3 py-1 text-xs font-medium text-[var(--color-bg)]"
+                    >
+                      {group.actionLabel}
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex shrink-0 items-center gap-3">
+                  <button
+                    onClick={() => setEditingId(gastoFixo.id)}
+                    aria-label={`Editar ${gastoFixo.nome}`}
+                    className="text-[var(--color-text-secondary)]"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  {confirmDeleteId === gastoFixo.id ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => onRemove(gastoFixo.id)}
+                        className="text-sm font-medium text-[var(--color-expense)]"
+                      >
+                        Confirmar
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="text-sm text-[var(--color-text-secondary)]"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDeleteId(gastoFixo.id)}
+                      aria-label={`Remover ${gastoFixo.nome}`}
+                      className="text-[var(--color-text-secondary)]"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+
+        <div className="px-5 py-4">
+          {adding ? (
+            <GastoFixoForm
+              tipo={group.tipo}
+              categories={categories}
+              accounts={accounts}
+              onSave={async (input) => {
+                await onSave(null, input);
+                setAdding(false);
+              }}
+              onCancel={() => setAdding(false)}
+            />
+          ) : (
+            <button
+              onClick={() => setAdding(true)}
+              className="flex items-center gap-1.5 text-sm text-[var(--color-green)]"
+            >
+              <Plus size={16} />
+              {group.addLabel}
+            </button>
+          )}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 function GastoFixoForm({
+  tipo,
   categories,
   accounts,
   initial,
   onSave,
   onCancel,
 }: {
+  tipo: Tipo;
   categories: Category[];
   accounts: Account[];
   initial?: GastoFixo;
@@ -328,6 +433,7 @@ function GastoFixoForm({
     setSaving(true);
     try {
       await onSave({
+        tipo,
         nome: nome.trim(),
         valor: parsedValor,
         categoria_id: categoriaId,
@@ -345,7 +451,7 @@ function GastoFixoForm({
         autoFocus
         value={nome}
         onChange={(e) => setNome(e.target.value)}
-        placeholder="Nome (ex: Aluguel)"
+        placeholder={tipo === "receita" ? "Nome (ex: Vale Alimentação)" : "Nome (ex: Aluguel)"}
         className="rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm outline-none focus:border-[var(--color-green)]"
       />
       <div className="flex gap-2">
@@ -360,8 +466,8 @@ function GastoFixoForm({
           inputMode="numeric"
           value={diaVencimento}
           onChange={(e) => setDiaVencimento(e.target.value)}
-          placeholder="Dia vence"
-          className="w-24 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm outline-none focus:border-[var(--color-green)]"
+          placeholder="Dia (31 = último)"
+          className="w-32 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm outline-none focus:border-[var(--color-green)]"
         />
       </div>
       <select
@@ -369,7 +475,7 @@ function GastoFixoForm({
         onChange={(e) => setCategoriaId(e.target.value)}
         className="rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm outline-none focus:border-[var(--color-green)]"
       >
-        {categories.length === 0 && <option value="">Nenhuma categoria de gasto</option>}
+        {categories.length === 0 && <option value="">Nenhuma categoria</option>}
         {categories.map((c) => (
           <option key={c.id} value={c.id}>
             {c.nome}

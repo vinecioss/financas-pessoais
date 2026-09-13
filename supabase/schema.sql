@@ -32,13 +32,15 @@ create table if not exists accounts (
 alter table accounts add column if not exists dia_fechamento smallint check (dia_fechamento between 1 and 31);
 alter table accounts add column if not exists dia_vencimento smallint check (dia_vencimento between 1 and 31);
 
--- gastos fixos: despesas recorrentes mensais (aluguel, assinaturas...).
--- É só um "modelo" — pagar um gasto fixo cria um lançamento normal
--- vinculado a ele; no mês seguinte, sem lançamento novo, ele volta a
--- aparecer como pendente.
+-- lançamentos fixos: ganhos e despesas recorrentes mensais (aluguel,
+-- assinaturas, vale alimentação, salário...). É só um "modelo" — pagar
+-- ou receber um lançamento fixo cria um lançamento normal vinculado a
+-- ele; no mês seguinte, sem lançamento novo, ele volta a aparecer como
+-- pendente.
 create table if not exists gastos_fixos (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users not null,
+  tipo text not null default 'despesa' check (tipo in ('receita', 'despesa')),
   nome text not null,
   valor numeric(12,2) not null,
   categoria_id uuid references categories not null,
@@ -46,6 +48,9 @@ create table if not exists gastos_fixos (
   dia_vencimento smallint check (dia_vencimento between 1 and 31),
   created_at timestamptz default now()
 );
+
+-- Caso a tabela já exista de uma versão anterior do schema, garante a coluna nova.
+alter table gastos_fixos add column if not exists tipo text not null default 'despesa' check (tipo in ('receita', 'despesa'));
 
 create table if not exists transactions (
   id uuid primary key default gen_random_uuid(),

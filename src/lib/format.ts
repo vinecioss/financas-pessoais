@@ -26,9 +26,13 @@ export function monthLabel(year: number, month: number): string {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
+export function daysInMonth(year: number, month: number) {
+  return new Date(year, month, 0).getDate();
+}
+
 export function monthRange(year: number, month: number) {
   const start = `${year}-${String(month).padStart(2, "0")}-01`;
-  const lastDay = new Date(year, month, 0).getDate();
+  const lastDay = daysInMonth(year, month);
   const end = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
   return { start, end };
 }

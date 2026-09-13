@@ -1,12 +1,8 @@
 import type { Account, TransactionWithCategory } from "@/types/database";
-import { monthRange, shiftMonth } from "@/lib/format";
+import { daysInMonth, monthRange, shiftMonth } from "@/lib/format";
 
 function pad(n: number) {
   return String(n).padStart(2, "0");
-}
-
-function daysInMonth(year: number, month: number) {
-  return new Date(year, month, 0).getDate();
 }
 
 /**
