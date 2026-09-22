@@ -21,11 +21,32 @@ const client = new Client({
 try {
   await client.connect();
 
-  const migration = await client.query(
-    "select 1 from public.app_migrations where version = '001_initial_schema'"
+  const migrations = await client.query(
+    `select version from public.app_migrations
+     where version = any($1::text[])`,
+    [["001_initial_schema", "002_authenticated_user_defaults"]]
   );
-  if (!migration.rowCount) {
-    throw new Error("A migração inicial não está registrada.");
+  if (migrations.rowCount !== 2) {
+    throw new Error("Uma ou mais migrações obrigatórias não estão registradas.");
+  }
+
+  const userDefaults = await client.query(
+    `select table_name, column_default
+     from information_schema.columns
+     where table_schema = 'public'
+       and table_name = any($1::text[])
+       and column_name = 'user_id'`,
+    [TABLES]
+  );
+
+  const missingUserDefaults = userDefaults.rows.filter(
+    (row) => !row.column_default?.includes("auth.user_id()")
+  );
+  if (
+    userDefaults.rowCount !== TABLES.length ||
+    missingUserDefaults.length > 0
+  ) {
+    throw new Error("Uma ou mais tabelas não preenchem o usuário autenticado.");
   }
 
   const security = await client.query(
@@ -71,7 +92,9 @@ try {
 
   console.log("Schema Neon verificado:");
   for (const table of TABLES) {
-    console.log(`- ${table}: RLS ativo, ${counts[table]} registro(s)`);
+    console.log(
+      `- ${table}: RLS ativo, usuário automático, ${counts[table]} registro(s)`
+    );
   }
   console.log(`- relações por chave estrangeira: ${relations.rows[0].relation_count}`);
 } catch (error) {

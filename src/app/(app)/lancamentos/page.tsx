@@ -53,11 +53,7 @@ export default function LancamentosPage() {
     if (editing) {
       await updateTransaction(db, editing.id, input);
     } else {
-      const {
-        data: { user },
-      } = await db.auth.getUser();
-      if (!user) return;
-      await createTransaction(db, user.id, input);
+      await createTransaction(db, input);
     }
     setModalOpen(false);
     setEditing(null);

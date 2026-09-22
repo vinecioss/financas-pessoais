@@ -9,6 +9,7 @@
     "lint": "eslint",
     "migration:validate": "node scripts/validate-neon-import.mjs",
     "migration:schema": "node scripts/apply-neon-schema.mjs",
+    "migration:user-defaults": "node scripts/apply-neon-user-defaults.mjs",
     "migration:verify": "node scripts/verify-neon-schema.mjs",
     "migration:import": "node scripts/import-neon.mjs"
   },

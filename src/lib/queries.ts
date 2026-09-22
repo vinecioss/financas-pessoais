@@ -22,13 +22,10 @@ export async function getCategories(db: Client): Promise<Category[]> {
 
 export async function createCategory(
   db: Client,
-  userId: string,
   tipo: Tipo,
   nome: string
 ) {
-  const { error } = await db
-    .from("categories")
-    .insert({ user_id: userId, tipo, nome });
+  const { error } = await db.from("categories").insert({ tipo, nome });
   if (error) throw error;
 }
 
@@ -48,14 +45,13 @@ export async function getAccounts(db: Client): Promise<Account[]> {
 
 export async function createAccount(
   db: Client,
-  userId: string,
   tipo: ContaTipo,
   nome: string,
   saldoInicial: number
 ) {
   const { error } = await db
     .from("accounts")
-    .insert({ user_id: userId, tipo, nome, saldo_inicial: saldoInicial });
+    .insert({ tipo, nome, saldo_inicial: saldoInicial });
   if (error) throw error;
 }
 
@@ -86,14 +82,13 @@ export async function getBudgets(db: Client): Promise<Budget[]> {
 
 export async function upsertBudget(
   db: Client,
-  userId: string,
   categoriaId: string,
   limiteMensal: number
 ) {
   const { error } = await db
     .from("budgets")
     .upsert(
-      { user_id: userId, categoria_id: categoriaId, limite_mensal: limiteMensal },
+      { categoria_id: categoriaId, limite_mensal: limiteMensal },
       { onConflict: "user_id,categoria_id" }
     );
   if (error) throw error;
@@ -127,12 +122,9 @@ export interface GastoFixoInput {
 
 export async function createGastoFixo(
   db: Client,
-  userId: string,
   input: GastoFixoInput
 ) {
-  const { error } = await db
-    .from("gastos_fixos")
-    .insert({ ...input, user_id: userId });
+  const { error } = await db.from("gastos_fixos").insert(input);
   if (error) throw error;
 }
 
@@ -192,12 +184,9 @@ export interface TransactionInput {
 
 export async function createTransaction(
   db: Client,
-  userId: string,
   input: TransactionInput
 ) {
-  const { error } = await db
-    .from("transactions")
-    .insert({ ...input, user_id: userId });
+  const { error } = await db.from("transactions").insert(input);
   if (error) throw error;
 }
 

@@ -56,11 +56,7 @@ export default function ContasPage() {
 
   async function handlePayment(input: TransactionInput) {
     const db = createClient();
-    const {
-      data: { user },
-    } = await db.auth.getUser();
-    if (!user) return;
-    await createTransaction(db, user.id, input);
+    await createTransaction(db, input);
     setPayingAccount(null);
     await reload();
   }
@@ -163,12 +159,8 @@ function AccountGroup({
   async function handleAdd() {
     if (!nome.trim()) return;
     const db = createClient();
-    const {
-      data: { user },
-    } = await db.auth.getUser();
-    if (!user) return;
     const inicial = Number(saldoInicial.replace(",", ".")) || 0;
-    await createAccount(db, user.id, group.tipo, nome.trim(), inicial);
+    await createAccount(db, group.tipo, nome.trim(), inicial);
     setNome("");
     setSaldoInicial("");
     setAdding(false);

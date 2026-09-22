@@ -120,20 +120,12 @@ export default function ImportarPage() {
     setImporting(true);
     setError(null);
     const db = createClient();
-    const {
-      data: { user },
-    } = await db.auth.getUser();
-    if (!user) {
-      setError("Sessão expirada. Faça login novamente.");
-      setImporting(false);
-      return;
-    }
 
     const toImport = rows.filter((r) => r.include && r.dataValida && r.categoria_id);
     let count = 0;
     try {
       for (const r of toImport) {
-        await createTransaction(db, user.id, {
+        await createTransaction(db, {
           tipo: r.tipo,
           valor: r.valor,
           categoria_id: r.categoria_id,

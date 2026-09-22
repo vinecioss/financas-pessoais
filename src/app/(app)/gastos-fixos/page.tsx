@@ -105,11 +105,7 @@ export default function GastosFixosPage() {
     if (id) {
       await updateGastoFixo(db, id, input);
     } else {
-      const {
-        data: { user },
-      } = await db.auth.getUser();
-      if (!user) return;
-      await createGastoFixo(db, user.id, input);
+      await createGastoFixo(db, input);
     }
     await reload();
   }
@@ -123,11 +119,7 @@ export default function GastosFixosPage() {
   async function handlePay(input: TransactionInput) {
     if (!payingGasto) return;
     const db = createClient();
-    const {
-      data: { user },
-    } = await db.auth.getUser();
-    if (!user) return;
-    await createTransaction(db, user.id, { ...input, gasto_fixo_id: payingGasto.id });
+    await createTransaction(db, { ...input, gasto_fixo_id: payingGasto.id });
     setPayingGasto(null);
     await reload();
   }

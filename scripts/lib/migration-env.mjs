@@ -33,5 +33,12 @@ export function requireMigrationEnv(name) {
       `Variável ${name} ausente. Preencha o arquivo .env.migration local.`
     );
   }
+  if (name === "DATABASE_URL") {
+    return value.replace(
+      /([?&])sslmode=(prefer|require|verify-ca)(?=&|$)/i,
+      "$1sslmode=verify-full"
+    );
+  }
+
   return value;
 }

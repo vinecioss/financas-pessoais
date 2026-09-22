@@ -12,25 +12,27 @@ if (!dataApiUrl) {
 const neon = createNeonClient({
   dataApi: {
     url: dataApiUrl,
+
     getToken: async () => {
-      const { data, error } = await authClient.token();
-      if (error) return null;
-      return data?.token ?? null;
+      const result = await authClient.token();
+
+      if (result.error) {
+        return null;
+      }
+
+      return result.data?.token ?? null;
     },
   },
 });
 
 const auth = {
-  async signInWithPassword(credentials: { email: string; password: string }) {
+  async signInWithPassword(credentials: {
+    email: string;
+    password: string;
+  }) {
     return authClient.signIn.email(credentials);
   },
-  async getUser() {
-    const { data, error } = await authClient.getSession();
-    return {
-      data: { user: data?.user ?? null },
-      error,
-    };
-  },
+
   async signOut() {
     return authClient.signOut();
   },

@@ -91,11 +91,7 @@ function CategoryGroup({
   async function handleAdd() {
     if (!nome.trim()) return;
     const db = createClient();
-    const {
-      data: { user },
-    } = await db.auth.getUser();
-    if (!user) return;
-    await createCategory(db, user.id, tipo, nome.trim());
+    await createCategory(db, tipo, nome.trim());
     setNome("");
     setAdding(false);
     await onChanged();
@@ -209,15 +205,11 @@ function BudgetField({
   async function handleSave() {
     const parsed = Number(value.replace(",", "."));
     const db = createClient();
-    const {
-      data: { user },
-    } = await db.auth.getUser();
-    if (!user) return;
 
     if (!value.trim() || !parsed || parsed <= 0) {
       if (budget) await deleteBudget(db, categoryId);
     } else {
-      await upsertBudget(db, user.id, categoryId, parsed);
+      await upsertBudget(db, categoryId, parsed);
     }
     setEditing(false);
     await onChanged();
