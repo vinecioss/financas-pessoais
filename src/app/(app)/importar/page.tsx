@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Upload, Check } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/neon/client";
 import { createTransaction, getAccounts, getCategories } from "@/lib/queries";
 import {
   detectColumns,
@@ -43,8 +43,8 @@ export default function ImportarPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const supabase = createClient();
-    Promise.all([getCategories(supabase), getAccounts(supabase)]).then(([cat, acc]) => {
+    const db = createClient();
+    Promise.all([getCategories(db), getAccounts(db)]).then(([cat, acc]) => {
       setCategories(cat);
       setAccounts(acc);
       setContaId((current) => current || acc[0]?.id || "");
@@ -119,10 +119,10 @@ export default function ImportarPage() {
     }
     setImporting(true);
     setError(null);
-    const supabase = createClient();
+    const db = createClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await db.auth.getUser();
     if (!user) {
       setError("Sessão expirada. Faça login novamente.");
       setImporting(false);
@@ -133,7 +133,7 @@ export default function ImportarPage() {
     let count = 0;
     try {
       for (const r of toImport) {
-        await createTransaction(supabase, user.id, {
+        await createTransaction(db, user.id, {
           tipo: r.tipo,
           valor: r.valor,
           categoria_id: r.categoria_id,

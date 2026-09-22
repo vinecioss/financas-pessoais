@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Trash2, Wallet, CreditCard, TrendingUp } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/neon/client";
 import {
   createAccount,
   createTransaction,
@@ -38,11 +38,11 @@ export default function ContasPage() {
   const [payingAccount, setPayingAccount] = useState<Account | null>(null);
 
   async function reload() {
-    const supabase = createClient();
+    const db = createClient();
     const [acc, tx, cat] = await Promise.all([
-      getAccounts(supabase),
-      getAllTransactions(supabase),
-      getCategories(supabase),
+      getAccounts(db),
+      getAllTransactions(db),
+      getCategories(db),
     ]);
     setAccounts(acc);
     setTransactions(tx);
@@ -55,12 +55,12 @@ export default function ContasPage() {
   }, []);
 
   async function handlePayment(input: TransactionInput) {
-    const supabase = createClient();
+    const db = createClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await db.auth.getUser();
     if (!user) return;
-    await createTransaction(supabase, user.id, input);
+    await createTransaction(db, user.id, input);
     setPayingAccount(null);
     await reload();
   }
@@ -162,13 +162,13 @@ function AccountGroup({
 
   async function handleAdd() {
     if (!nome.trim()) return;
-    const supabase = createClient();
+    const db = createClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await db.auth.getUser();
     if (!user) return;
     const inicial = Number(saldoInicial.replace(",", ".")) || 0;
-    await createAccount(supabase, user.id, group.tipo, nome.trim(), inicial);
+    await createAccount(db, user.id, group.tipo, nome.trim(), inicial);
     setNome("");
     setSaldoInicial("");
     setAdding(false);
@@ -176,8 +176,8 @@ function AccountGroup({
   }
 
   async function handleRemove(id: string) {
-    const supabase = createClient();
-    await deleteAccount(supabase, id);
+    const db = createClient();
+    await deleteAccount(db, id);
     setConfirmId(null);
     await onChanged();
   }
@@ -333,8 +333,8 @@ function SaldoInicialField({
 
   async function handleSave() {
     const parsed = Number(value.replace(",", ".")) || 0;
-    const supabase = createClient();
-    await updateAccount(supabase, account.id, { saldo_inicial: parsed });
+    const db = createClient();
+    await updateAccount(db, account.id, { saldo_inicial: parsed });
     setEditing(false);
     await onChanged();
   }
@@ -393,10 +393,10 @@ function CycleFields({
   );
 
   async function handleSave() {
-    const supabase = createClient();
+    const db = createClient();
     const f = Number(fechamento);
     const v = Number(vencimento);
-    await updateAccount(supabase, account.id, {
+    await updateAccount(db, account.id, {
       dia_fechamento: f >= 1 && f <= 31 ? f : null,
       dia_vencimento: v >= 1 && v <= 31 ? v : null,
     });

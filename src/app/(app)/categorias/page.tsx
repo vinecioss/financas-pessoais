@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/neon/client";
 import {
   createCategory,
   deleteBudget,
@@ -22,8 +22,8 @@ export default function CategoriasPage() {
   const [loading, setLoading] = useState(true);
 
   async function reload() {
-    const supabase = createClient();
-    const [cat, bud] = await Promise.all([getCategories(supabase), getBudgets(supabase)]);
+    const db = createClient();
+    const [cat, bud] = await Promise.all([getCategories(db), getBudgets(db)]);
     setCategories(cat);
     setBudgets(bud);
   }
@@ -90,20 +90,20 @@ function CategoryGroup({
 
   async function handleAdd() {
     if (!nome.trim()) return;
-    const supabase = createClient();
+    const db = createClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await db.auth.getUser();
     if (!user) return;
-    await createCategory(supabase, user.id, tipo, nome.trim());
+    await createCategory(db, user.id, tipo, nome.trim());
     setNome("");
     setAdding(false);
     await onChanged();
   }
 
   async function handleRemove(id: string) {
-    const supabase = createClient();
-    await deleteCategory(supabase, id);
+    const db = createClient();
+    await deleteCategory(db, id);
     setConfirmId(null);
     await onChanged();
   }
@@ -208,16 +208,16 @@ function BudgetField({
 
   async function handleSave() {
     const parsed = Number(value.replace(",", "."));
-    const supabase = createClient();
+    const db = createClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await db.auth.getUser();
     if (!user) return;
 
     if (!value.trim() || !parsed || parsed <= 0) {
-      if (budget) await deleteBudget(supabase, categoryId);
+      if (budget) await deleteBudget(db, categoryId);
     } else {
-      await upsertBudget(supabase, user.id, categoryId, parsed);
+      await upsertBudget(db, user.id, categoryId, parsed);
     }
     setEditing(false);
     await onChanged();

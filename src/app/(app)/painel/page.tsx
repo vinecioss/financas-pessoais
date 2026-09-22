@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/neon/client";
 import { getAccounts, getAllTransactions, getBudgets, getCategories } from "@/lib/queries";
 import { computeAccountBalance, computeCardCycleRange, computeCardTotal } from "@/lib/accounts";
 import { formatCurrency, monthRange } from "@/lib/format";
@@ -26,8 +26,8 @@ export default function PainelPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = createClient();
-    Promise.all([getAllTransactions(supabase), getBudgets(supabase), getCategories(supabase), getAccounts(supabase)])
+    const db = createClient();
+    Promise.all([getAllTransactions(db), getBudgets(db), getCategories(db), getAccounts(db)])
       .then(([tx, bg, cat, acc]) => {
         setAllTransactions(tx);
         setBudgets(bg);

@@ -2,15 +2,15 @@
 
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/neon/client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function Header({ title, subtitle }: { title: string; subtitle?: string }) {
   const router = useRouter();
 
   async function handleLogout() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    const db = createClient();
+    await db.auth.signOut();
     router.replace("/login");
     router.refresh();
   }

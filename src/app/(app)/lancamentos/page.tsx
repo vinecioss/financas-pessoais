@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/neon/client";
 import {
   createTransaction,
   deleteTransaction,
@@ -30,11 +30,11 @@ export default function LancamentosPage() {
   const [editing, setEditing] = useState<TransactionWithCategory | null>(null);
 
   async function reload() {
-    const supabase = createClient();
+    const db = createClient();
     const [tx, cat, acc] = await Promise.all([
-      getAllTransactions(supabase),
-      getCategories(supabase),
-      getAccounts(supabase),
+      getAllTransactions(db),
+      getCategories(db),
+      getAccounts(db),
     ]);
     setTransactions(tx);
     setCategories(cat);
@@ -49,15 +49,15 @@ export default function LancamentosPage() {
   const filtered = transactions.filter((t) => filter === "todos" || t.tipo === filter);
 
   async function handleSave(input: TransactionInput) {
-    const supabase = createClient();
+    const db = createClient();
     if (editing) {
-      await updateTransaction(supabase, editing.id, input);
+      await updateTransaction(db, editing.id, input);
     } else {
       const {
         data: { user },
-      } = await supabase.auth.getUser();
+      } = await db.auth.getUser();
       if (!user) return;
-      await createTransaction(supabase, user.id, input);
+      await createTransaction(db, user.id, input);
     }
     setModalOpen(false);
     setEditing(null);
@@ -66,8 +66,8 @@ export default function LancamentosPage() {
 
   async function handleDelete() {
     if (!editing) return;
-    const supabase = createClient();
-    await deleteTransaction(supabase, editing.id);
+    const db = createClient();
+    await deleteTransaction(db, editing.id);
     setModalOpen(false);
     setEditing(null);
     await reload();

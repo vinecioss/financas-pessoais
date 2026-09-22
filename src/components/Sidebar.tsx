@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutGrid, ArrowLeftRight, Wallet, Repeat, Tags, Upload, LogOut } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/neon/client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const ITEMS = [
@@ -20,8 +20,8 @@ export function Sidebar() {
   const router = useRouter();
 
   async function handleLogout() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    const db = createClient();
+    await db.auth.signOut();
     router.replace("/login");
     router.refresh();
   }

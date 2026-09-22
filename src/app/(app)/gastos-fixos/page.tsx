@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Trash2, Pencil, Check, Undo2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/neon/client";
 import {
   createGastoFixo,
   createTransaction,
@@ -75,12 +75,12 @@ export default function GastosFixosPage() {
   const [payingGasto, setPayingGasto] = useState<GastoFixo | null>(null);
 
   async function reload() {
-    const supabase = createClient();
+    const db = createClient();
     const [gf, tx, cat, acc] = await Promise.all([
-      getGastosFixos(supabase),
-      getAllTransactions(supabase),
-      getCategories(supabase),
-      getAccounts(supabase),
+      getGastosFixos(db),
+      getAllTransactions(db),
+      getCategories(db),
+      getAccounts(db),
     ]);
     setGastosFixos(gf);
     setTransactions(tx);
@@ -101,40 +101,40 @@ export default function GastosFixosPage() {
   const saldoFixo = receitaTotal - despesaTotal;
 
   async function handleSaveGastoFixo(id: string | null, input: GastoFixoInput) {
-    const supabase = createClient();
+    const db = createClient();
     if (id) {
-      await updateGastoFixo(supabase, id, input);
+      await updateGastoFixo(db, id, input);
     } else {
       const {
         data: { user },
-      } = await supabase.auth.getUser();
+      } = await db.auth.getUser();
       if (!user) return;
-      await createGastoFixo(supabase, user.id, input);
+      await createGastoFixo(db, user.id, input);
     }
     await reload();
   }
 
   async function handleRemove(id: string) {
-    const supabase = createClient();
-    await deleteGastoFixo(supabase, id);
+    const db = createClient();
+    await deleteGastoFixo(db, id);
     await reload();
   }
 
   async function handlePay(input: TransactionInput) {
     if (!payingGasto) return;
-    const supabase = createClient();
+    const db = createClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await db.auth.getUser();
     if (!user) return;
-    await createTransaction(supabase, user.id, { ...input, gasto_fixo_id: payingGasto.id });
+    await createTransaction(db, user.id, { ...input, gasto_fixo_id: payingGasto.id });
     setPayingGasto(null);
     await reload();
   }
 
   async function handleUndo(transacaoId: string) {
-    const supabase = createClient();
-    await deleteTransaction(supabase, transacaoId);
+    const db = createClient();
+    await deleteTransaction(db, transacaoId);
     await reload();
   }
 
